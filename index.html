@@ -6,495 +6,451 @@
 <title>TA 경력채용 운영 대시보드</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #f5f4f0;
-    --surface: #ffffff;
-    --surface2: #f0efe9;
-    --border: rgba(0,0,0,0.08);
-    --border2: rgba(0,0,0,0.14);
-    --text: #1a1a18;
-    --text2: #6b6a65;
-    --text3: #9e9d98;
-    --accent: #1a1a18;
-    --blue: #2563eb;
-    --blue-bg: #eff6ff;
-    --green: #16a34a;
-    --green-bg: #f0fdf4;
-    --amber: #b45309;
-    --amber-bg: #fffbeb;
-    --red: #dc2626;
-    --red-bg: #fef2f2;
-    --purple: #7c3aed;
-    --purple-bg: #f5f3ff;
-    --gray-bg: #f1f0eb;
-    --radius: 12px;
-    --radius-sm: 8px;
-    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Pretendard', -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+:root{--bg:#f2f2f0;--surface:#fff;--surface2:#f7f7f5;--border:#e0e0db;--text:#1c1c1a;--text2:#6b6a65;--text3:#a0a09a;--accent:#1c1c1a;--blue:#2563eb;--blue-light:#eff6ff;--green:#15803d;--green-light:#f0fdf4;--amber:#b45309;--amber-light:#fffbeb;--red:#b91c1c;--red-light:#fef2f2;--purple:#6d28d9;--purple-light:#f5f3ff;--r:10px;--rs:6px}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,'Segoe UI',sans-serif}
+body{background:var(--bg);color:var(--text);font-size:13px;min-height:100vh}
+.header{background:var(--surface);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:200}
+.header-title{font-size:15px;font-weight:600;letter-spacing:-.3px}
+.header-title span{color:var(--text3);font-weight:400;font-size:13px;margin-left:6px}
+.header-right{display:flex;align-items:center;gap:10px}
+.last-update{font-size:11px;color:var(--text3)}
+.upload-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit}
+.upload-btn:hover{opacity:.85}
+#fileInput{display:none}
+.layout{display:flex;height:calc(100vh - 52px);overflow:hidden}
 
-  /* Header */
-  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-  .header-left { display: flex; align-items: center; gap: 12px; }
-  .logo { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
-  .logo span { color: var(--text3); font-weight: 400; }
-  .header-right { display: flex; align-items: center; gap: 10px; }
-  .upload-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; transition: opacity .15s; }
-  .upload-btn:hover { opacity: .85; }
-  .upload-btn svg { width: 14px; height: 14px; }
-  .last-update { font-size: 12px; color: var(--text3); }
-  #fileInput { display: none; }
+/* Sidebar */
+.sidebar{width:200px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:12px 0}
+.sidebar-section{margin-bottom:4px}
+.sidebar-label{font-size:10px;font-weight:600;letter-spacing:.6px;color:var(--text3);padding:6px 14px 4px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between}
+.sidebar-label span{cursor:pointer;opacity:.6;font-size:11px}
+.filter-items{padding:0 10px 8px}
+.filter-item{padding:5px 8px;border-radius:var(--rs);cursor:pointer;font-size:12px;color:var(--text2);transition:background .1s;display:flex;align-items:center;justify-content:space-between;user-select:none}
+.filter-item:hover{background:var(--surface2)}
+.filter-item.active{background:var(--accent);color:#fff}
+.filter-item .cnt{font-size:10px;opacity:.7}
+.sidebar-divider{height:1px;background:var(--border);margin:6px 10px}
 
-  /* Layout */
-  .main { max-width: 1280px; margin: 0 auto; padding: 28px 32px; }
+/* Main */
+.main{flex:1;overflow-y:auto;padding:16px}
+.hidden{display:none!important}
+.upload-zone{border:2px dashed var(--border);border-radius:var(--r);padding:60px;text-align:center;cursor:pointer;background:var(--surface);margin-bottom:16px}
+.upload-zone h2{font-size:15px;font-weight:500;margin-bottom:6px}
+.upload-zone p{font-size:12px;color:var(--text3)}
 
-  /* Upload zone */
-  .upload-zone { border: 2px dashed var(--border2); border-radius: var(--radius); padding: 60px 32px; text-align: center; cursor: pointer; transition: all .2s; background: var(--surface); margin-bottom: 28px; }
-  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: var(--surface2); }
-  .upload-zone-icon { font-size: 36px; margin-bottom: 12px; }
-  .upload-zone h2 { font-size: 16px; font-weight: 500; margin-bottom: 6px; }
-  .upload-zone p { font-size: 13px; color: var(--text3); }
-  .hidden { display: none !important; }
+/* Summary top row */
+.summary-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
+.sum-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px}
+.sum-label{font-size:10px;color:var(--text3);margin-bottom:4px;font-weight:500;text-transform:uppercase;letter-spacing:.4px}
+.sum-val{font-size:22px;font-weight:700;letter-spacing:-1px;line-height:1}
+.sum-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.sum-card.accent{border-top:3px solid var(--accent)}
 
-  /* Metrics */
-  .section-label { font-size: 11px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
-  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
-  .metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
-  .metric-label { font-size: 12px; color: var(--text3); margin-bottom: 8px; }
-  .metric-value { font-size: 28px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
-  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 6px; }
-  .metric-accent { border-top: 3px solid var(--accent); }
+/* Funnel cards */
+.funnel-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
+.funnel-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;text-align:center}
+.funnel-stage{font-size:10px;color:var(--text3);margin-bottom:3px;font-weight:500}
+.funnel-num{font-size:18px;font-weight:700;letter-spacing:-.5px}
+.funnel-rate{font-size:10px;color:var(--text3);margin-top:2px}
+.funnel-arrow{display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text3);padding-top:20px}
 
-  /* TO cards */
-  .to-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
-  .to-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; }
-  .to-label { font-size: 11px; color: var(--text3); margin-bottom: 8px; font-weight: 500; }
-  .to-total { font-size: 24px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 10px; }
-  .to-bars { display: flex; gap: 4px; height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
-  .to-bar-done { background: var(--accent); border-radius: 3px; }
-  .to-bar-remain { background: var(--border2); border-radius: 3px; flex: 1; }
-  .to-stats { display: flex; gap: 14px; font-size: 11px; }
-  .to-stat-done { color: var(--green); font-weight: 500; }
-  .to-stat-remain { color: var(--amber); font-weight: 500; }
+/* Interview + Rate section */
+.mid-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.info-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:14px}
+.info-card-title{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.info-row{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0;font-size:12px;border-bottom:1px solid var(--bg)}
+.info-row:last-child{border-bottom:none}
+.info-row .lbl{color:var(--text2)}
+.info-row .val{font-weight:600}
+.rate-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0}
+.rate-item{text-align:center;padding:8px 4px;border-right:1px solid var(--border)}
+.rate-item:last-child{border-right:none}
+.rate-label{font-size:9px;color:var(--text3);margin-bottom:3px}
+.rate-open{font-size:10px;font-weight:500}
+.rate-total{font-size:10px;color:var(--text3)}
+.rate-pct{font-size:16px;font-weight:700;color:var(--blue)}
 
-  /* Charts */
-  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-  .charts-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 24px; }
-  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
-  .chart-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
-  .chart-sub { font-size: 11px; color: var(--text3); margin-bottom: 14px; }
-  .chart-wrap { position: relative; }
-  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
-  .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+/* Stage table */
+.stage-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:12px;overflow:hidden}
+.stage-table-title{font-size:12px;font-weight:600;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text2)}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;font-weight:600;color:var(--text3);text-align:center;padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface2)}
+th.left{text-align:left}
+td{padding:6px 10px;border-bottom:1px solid var(--border);font-size:12px;text-align:center;vertical-align:middle}
+td.left{text-align:left;font-weight:500}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+td .badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:500}
+.b-blue{background:var(--blue-light);color:var(--blue)}
+.b-green{background:var(--green-light);color:var(--green)}
+.b-amber{background:var(--amber-light);color:var(--amber)}
+.b-red{background:var(--red-light);color:var(--red)}
+.b-purple{background:var(--purple-light);color:var(--purple)}
+.b-gray{background:var(--surface2);color:var(--text2)}
+td.num{font-variant-numeric:tabular-nums;font-weight:500}
+td.zero{color:var(--text3)}
 
-  /* Filters + Table */
-  .table-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 24px; }
-  .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-  .table-header-left { display: flex; align-items: baseline; gap: 10px; }
-  .table-title { font-size: 14px; font-weight: 500; }
-  .table-count { font-size: 12px; color: var(--text3); }
-  .filters { display: flex; gap: 8px; flex-wrap: wrap; }
-  .filters select { font-size: 12px; padding: 6px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); cursor: pointer; font-family: inherit; }
-  .filters select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-  th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: .4px; border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--surface2); }
-  td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--surface2); }
-  td.num { text-align: right; font-variant-numeric: tabular-nums; }
-  td.num-bold { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+/* Charts */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:14px;overflow:hidden}
+.chart-card.full{grid-column:1/-1}
+.chart-title{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px}
+.chart-wrap{position:relative}
 
-  /* Badges */
-  .badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap; }
-  .b-blue { background: var(--blue-bg); color: var(--blue); }
-  .b-green { background: var(--green-bg); color: var(--green); }
-  .b-amber { background: var(--amber-bg); color: var(--amber); }
-  .b-red { background: var(--red-bg); color: var(--red); }
-  .b-purple { background: var(--purple-bg); color: var(--purple); }
-  .b-gray { background: var(--gray-bg); color: var(--text2); }
-
-  /* Funnel */
-  .funnel-wrap { display: flex; flex-direction: column; gap: 6px; }
-  .funnel-row { display: flex; align-items: center; gap: 10px; }
-  .funnel-label { font-size: 11px; color: var(--text3); width: 60px; text-align: right; flex-shrink: 0; }
-  .funnel-bar-bg { flex: 1; background: var(--surface2); border-radius: 3px; height: 20px; overflow: hidden; position: relative; }
-  .funnel-bar { height: 100%; border-radius: 3px; transition: width .6s ease; display: flex; align-items: center; }
-  .funnel-val { font-size: 11px; font-weight: 500; color: #fff; padding: 0 8px; white-space: nowrap; }
-  .funnel-pct { font-size: 10px; color: var(--text3); width: 36px; flex-shrink: 0; }
-
-  /* Donut center text */
-  .donut-wrap { position: relative; }
-  .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
-  .donut-center-val { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
-  .donut-center-label { font-size: 10px; color: var(--text3); }
-
-  @media (max-width: 900px) {
-    .main { padding: 20px 16px; }
-    .charts-grid, .charts-grid-3 { grid-template-columns: 1fr; }
-    .to-grid { grid-template-columns: 1fr; }
-    .header { padding: 0 16px; }
-  }
+/* Owner filter buttons */
+.owner-grid{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.owner-btn{padding:5px 12px;border:1px solid var(--border);border-radius:20px;font-size:12px;cursor:pointer;background:var(--surface);color:var(--text2);transition:all .15s;font-family:inherit}
+.owner-btn:hover{border-color:var(--accent)}
+.owner-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 </style>
 </head>
 <body>
-
 <header class="header">
-  <div class="header-left">
-    <div class="logo">TA Dashboard <span>경력채용 운영현황</span></div>
-  </div>
+  <div class="header-title">TA 경력채용 운영 대시보드<span id="lastUpdate"></span></div>
   <div class="header-right">
-    <span class="last-update" id="lastUpdate">파일을 업로드해주세요</span>
     <label class="upload-btn" for="fileInput">
-      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8">
-        <path d="M7 9V2M4 5l3-3 3 3M2 10v1a1 1 0 001 1h8a1 1 0 001-1v-1"/>
-      </svg>
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6.5 8.5V2M4 4.5l2.5-2.5 2.5 2.5M2 9.5v1a1 1 0 001 1h7a1 1 0 001-1v-1"/></svg>
       엑셀 업로드
     </label>
     <input type="file" id="fileInput" accept=".xlsx,.xls">
   </div>
 </header>
 
-<main class="main">
-  <!-- Upload zone -->
-  <div class="upload-zone" id="uploadZone">
-    <div class="upload-zone-icon">📊</div>
-    <h2>운영 시트 엑셀 파일을 업로드하세요</h2>
-    <p>드래그&amp;드롭 또는 클릭 · "운영 시트" 탭 자동 인식 · 파일은 브라우저에서만 처리됩니다</p>
-  </div>
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">진행상황 <span onclick="clearFilter('status')">초기화</span></div>
+      <div class="filter-items" id="filterStatus"></div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">직군 <span onclick="clearFilter('job')">초기화</span></div>
+      <div class="filter-items" id="filterJob"></div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Lv.4 조직 <span onclick="clearFilter('lv4')">초기화</span></div>
+      <div class="filter-items" id="filterLv4"></div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Lv.5 조직 <span onclick="clearFilter('lv5')">초기화</span></div>
+      <div class="filter-items" id="filterLv5"></div>
+    </div>
+  </aside>
 
-  <div id="dashboard" class="hidden">
-    <!-- Metrics -->
-    <div class="section-label">핵심 지표</div>
-    <div class="metrics-grid" id="metricsGrid"></div>
+  <!-- Main -->
+  <main class="main">
+    <div class="upload-zone hidden" id="uploadZone">
+      <h2>운영 시트 엑셀 파일을 업로드하세요</h2>
+      <p>드래그&드롭 또는 클릭 · "운영 시트" 탭 자동 인식</p>
+    </div>
 
-    <!-- TO -->
-    <div class="section-label">T/O 현황 (정규직)</div>
-    <div class="to-grid" id="toGrid"></div>
+    <div id="dashboard">
+      <!-- Owner buttons -->
+      <div class="owner-grid" id="ownerBtns"></div>
 
-    <!-- Charts row 1 -->
-    <div class="section-label">채용 현황 분석</div>
-    <div class="charts-grid" id="chartsRow1">
-      <div class="chart-card">
-        <div class="chart-title">지원 ~ 합격 퍼널</div>
-        <div class="chart-sub">전체 공고 합산 기준</div>
-        <div class="funnel-wrap" id="funnelChart"></div>
+      <!-- Summary -->
+      <div class="summary-grid" id="summaryGrid"></div>
+
+      <!-- Funnel -->
+      <div class="funnel-row" id="funnelRow"></div>
+
+      <!-- Mid: Interview stats + conversion rates -->
+      <div class="mid-grid">
+        <div class="info-card">
+          <div class="info-card-title">1차 인터뷰 대상자 현황</div>
+          <div id="interview1Info"></div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-title">2차 인터뷰 대상자 현황</div>
+          <div id="interview2Info"></div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-title">퍼널 전환율</div>
+          <div class="rate-grid" id="rateGrid"></div>
+        </div>
       </div>
-      <div class="chart-card">
-        <div class="chart-title">직군별 공고 분포</div>
-        <div class="chart-sub">진행 중 포함 전체</div>
-        <div class="legend" id="legendJob"></div>
-        <div class="chart-wrap donut-wrap" style="height:180px">
-          <canvas id="cJob" role="img" aria-label="직군별 공고 분포 도넛 차트"></canvas>
-          <div class="donut-center" id="donutJobCenter"></div>
+
+      <!-- Stage table -->
+      <div class="stage-table-wrap">
+        <div class="stage-table-title"># 전형단계별 채용 현황</div>
+        <div style="overflow-x:auto"><table id="stageTable"></table></div>
+      </div>
+
+      <!-- Charts -->
+      <div class="chart-grid">
+        <div class="chart-card full">
+          <div class="chart-title">조직별 전형단계 분포 (지원자 기준)</div>
+          <div class="chart-wrap" style="height:220px"><canvas id="cOrg" role="img" aria-label="조직별 전형단계 분포"></canvas></div>
+        </div>
+        <div class="chart-card full">
+          <div class="chart-title">조직별 채용 퍼널 (Lv.5)</div>
+          <div class="chart-wrap" style="height:220px"><canvas id="cFunnel" role="img" aria-label="조직별 채용 퍼널"></canvas></div>
         </div>
       </div>
     </div>
-
-    <div class="charts-grid-3">
-      <div class="chart-card">
-        <div class="chart-title">진행상황</div>
-        <div class="chart-sub">공고 건수 기준</div>
-        <div class="legend" id="legendStatus"></div>
-        <div class="chart-wrap donut-wrap" style="height:160px">
-          <canvas id="cStatus" role="img" aria-label="진행상황 도넛 차트"></canvas>
-          <div class="donut-center" id="donutStatusCenter"></div>
-        </div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">전형단계 분포</div>
-        <div class="chart-sub">공고 건수 기준</div>
-        <div class="chart-wrap" style="height:180px">
-          <canvas id="cStage" role="img" aria-label="전형단계 분포 가로 막대"></canvas>
-        </div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">담당자별 공고</div>
-        <div class="chart-sub">담당자 기준</div>
-        <div class="chart-wrap" style="height:180px">
-          <canvas id="cOwner" role="img" aria-label="담당자별 공고 수 막대 차트"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- Table -->
-    <div class="table-section">
-      <div class="table-header">
-        <div class="table-header-left">
-          <span class="table-title">공고 목록</span>
-          <span class="table-count" id="tableCount"></span>
-        </div>
-        <div class="filters">
-          <select id="fJob"><option value="">전체 직군</option></select>
-          <select id="fStage"><option value="">전체 전형단계</option></select>
-          <select id="fStatus"><option value="">전체 진행상황</option></select>
-          <select id="fOwner"><option value="">전체 담당자</option></select>
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>직무명</th>
-              <th>직군</th>
-              <th>고용형태</th>
-              <th>전형단계</th>
-              <th>진행상황</th>
-              <th>담당자</th>
-              <th>지원자</th>
-              <th>서류</th>
-              <th>1차</th>
-              <th>2차</th>
-              <th>최종합격</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</main>
+  </main>
+</div>
 
 <script>
-const CHART_COLORS = ['#1a1a18','#2563eb','#16a34a','#b45309','#7c3aed','#db2777','#0891b2','#dc2626'];
-const CHART_COLORS_LIGHT = ['#e5e5e0','#bfdbfe','#bbf7d0','#fde68a','#ddd6fe','#fbcfe8','#a5f3fc','#fecaca'];
+let allRows = [];
+let filters = { status: null, job: null, lv4: null, lv5: null, owner: null };
 let charts = [];
 
-function destroyCharts() { charts.forEach(c => c.destroy()); charts = []; }
+const STAGE_ORDER = ['채용공고','필기전형','스크리닝','서류전형','1차 인터뷰','2차 인터뷰','3차 인터뷰','프로필','처우협의','합격/입사','레퍼런스 체크','전체 불합격'];
+const STAGE_COLORS = {'채용공고':'#94a3b8','필기전형':'#64748b','스크리닝':'#475569','서류전형':'#3b82f6','1차 인터뷰':'#6366f1','2차 인터뷰':'#8b5cf6','3차 인터뷰':'#a855f7','프로필':'#f59e0b','처우협의':'#f97316','합격/입사':'#16a34a','레퍼런스 체크':'#0891b2','전체 불합격':'#ef4444'};
 
-function num(v) {
-  const n = Number(v);
-  return (v === null || v === undefined || v === '' || isNaN(n)) ? '-' : Math.round(n).toLocaleString();
-}
-function numRaw(v) {
-  const n = Number(v);
-  return (v === null || v === undefined || v === '' || isNaN(n)) ? 0 : Math.round(n);
-}
+function n(v){const x=Number(v);return(v===null||v===undefined||v===''||isNaN(x))?0:Math.round(x)}
+function fmt(v){return v===0?'-':v.toLocaleString()}
+function pct(a,b){return b>0?Math.round(a/b*100)+'%':'-%'}
 
-function statusBadge(s) {
-  if (!s || s === 'NaN') return '<span class="badge b-gray">-</span>';
-  const m = { '전형완료': 'b-green', '검토 중': 'b-blue', '진행 중': 'b-blue', '평가 중': 'b-amber', '시작 전': 'b-gray', '전체 불합격': 'b-red', '전형포기': 'b-red' };
-  return `<span class="badge ${m[s] || 'b-gray'}">${s}</span>`;
-}
-function stageBadge(s) {
-  if (!s || s === 'NaN') return '<span class="badge b-gray">-</span>';
-  const m = { '합격/입사': 'b-green', '처우협의': 'b-green', '1차 인터뷰': 'b-blue', '2차 인터뷰': 'b-purple', '3차 인터뷰': 'b-purple', '프로필': 'b-amber', '서류전형': 'b-amber', '채용공고': 'b-gray', '필기전형': 'b-gray', '전체 불합격': 'b-red', '레퍼런스 체크': 'b-blue' };
-  return `<span class="badge ${m[s] || 'b-gray'}">${s}</span>`;
-}
-function jobBadge(j) {
-  const m = { 'Tech': 'b-blue', 'S&B': 'b-purple', 'Corp': 'b-green', 'Design': 'b-amber' };
-  return `<span class="badge ${m[j] || 'b-gray'}">${j || '-'}</span>`;
+function stageBadge(s){
+  if(!s)return'<span class="badge b-gray">-</span>';
+  const m={'합격/입사':'b-green','처우협의':'b-green','1차 인터뷰':'b-blue','2차 인터뷰':'b-purple','3차 인터뷰':'b-purple','프로필':'b-amber','서류전형':'b-amber','채용공고':'b-gray','필기전형':'b-gray','스크리닝':'b-gray','전체 불합격':'b-red','레퍼런스 체크':'b-blue'};
+  return`<span class="badge ${m[s]||'b-gray'}">${s}</span>`;
 }
 
-function buildLegend(id, labels, colors) {
-  document.getElementById(id).innerHTML = labels.map((l, i) =>
-    `<span class="legend-item"><span class="legend-dot" style="background:${colors[i]}"></span>${l}</span>`
-  ).join('');
+function getFiltered(){
+  return allRows.filter(r=>
+    (!filters.status||r['진행상황']===filters.status)&&
+    (!filters.job||r['직군']===filters.job)&&
+    (!filters.lv4||r['Lv.4']===filters.lv4)&&
+    (!filters.lv5||r['Lv.5']===filters.lv5)&&
+    (!filters.owner||r['운영담당']===filters.owner)
+  );
 }
 
-function renderDashboard(rows) {
-  destroyCharts();
-  const valid = rows.filter(r => {
-    const n = r['공고명'];
-    return n && String(n).trim() && n !== 'NaN' && n !== '　' && n !== '0' && Number(r['No.']) > 0;
-  });
+function clearFilter(key){filters[key]=null;render();}
 
-  document.getElementById('uploadZone').classList.add('hidden');
-  document.getElementById('dashboard').classList.remove('hidden');
-  document.getElementById('lastUpdate').textContent = '업데이트: ' + new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+function buildSidebar(rows){
+  function makeFilter(elId, key, vals){
+    const el=document.getElementById(elId);
+    const counts={};
+    rows.forEach(r=>{const v=r[key];if(v&&v!=='NaN')counts[v]=(counts[v]||0)+1;});
+    const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    el.innerHTML=sorted.map(([v,c])=>`
+      <div class="filter-item${filters[{filterStatus:'status',filterJob:'job',filterLv4:'lv4',filterLv5:'lv5'}[elId]]===v?' active':''}" onclick="setFilter('${{filterStatus:'status',filterJob:'job',filterLv4:'lv4',filterLv5:'lv5'}[elId]}','${v.replace(/'/g,"\\'")}')">
+        <span>${v}</span><span class="cnt">${c}</span>
+      </div>`).join('');
+  }
+  makeFilter('filterStatus','진행상황',rows);
+  makeFilter('filterJob','직군',rows);
+  makeFilter('filterLv4','Lv.4',rows);
+  makeFilter('filterLv5','Lv.5',rows);
+}
 
-  // --- Metrics ---
-  const total = valid.length;
-  const ongoing = valid.filter(r => ['검토 중','진행 중','평가 중','시작 전'].includes(r['진행상황'])).length;
-  const done = valid.filter(r => r['진행상황'] === '전형완료').length;
-  const hired = valid.reduce((s, r) => s + numRaw(r['최종합격']), 0);
-  const applied = valid.reduce((s, r) => s + numRaw(r['지원자']), 0);
-  const pass1 = valid.reduce((s, r) => s + numRaw(r['1차 인터뷰']), 0);
-  const pass2 = valid.reduce((s, r) => s + numRaw(r['2차 인터뷰']), 0);
-  const cvRate = applied > 0 ? ((pass1 / applied) * 100).toFixed(1) : '-';
+function setFilter(key,val){
+  filters[key]=filters[key]===val?null:val;
+  render();
+}
 
-  document.getElementById('metricsGrid').innerHTML = [
-    { label: '총 공고 수', val: total, sub: `진행중 ${ongoing} · 완료 ${done}`, accent: true },
-    { label: '총 지원자', val: applied.toLocaleString(), sub: '전체 공고 합산', accent: false },
-    { label: '최종 합격', val: hired, sub: `2차 통과 ${pass2}명`, accent: false },
-    { label: '서류 통과율', val: cvRate + '%', sub: `지원 ${applied} → 1차 ${pass1}`, accent: false },
-  ].map(m => `
-    <div class="metric${m.accent ? ' metric-accent' : ''}">
-      <div class="metric-label">${m.label}</div>
-      <div class="metric-value">${m.val}</div>
-      <div class="metric-sub">${m.sub}</div>
+function render(){
+  const rows=getFiltered();
+  buildSidebar(allRows);
+
+  // Owner buttons
+  const owners=[...new Set(allRows.map(r=>r['운영담당']).filter(Boolean))].sort();
+  document.getElementById('ownerBtns').innerHTML=
+    ['전체',...owners].map(o=>`<button class="owner-btn${(o==='전체'&&!filters.owner)||(o===filters.owner)?' active':''}" onclick="setOwner('${o}')">${o}</button>`).join('');
+
+  const total=rows.length;
+  const apply=rows.reduce((s,r)=>s+n(r['지원자']),0);
+  const doc=rows.reduce((s,r)=>s+n(r['서류검토']),0);
+  const i1=rows.reduce((s,r)=>s+n(r['1차 인터뷰']),0);
+  const i2=rows.reduce((s,r)=>s+n(r['2차 인터뷰']),0);
+  const hire=rows.reduce((s,r)=>s+n(r['최종합격']),0);
+
+  // Summary
+  const ongoing=rows.filter(r=>['검토 중','진행 중','평가 중','시작 전'].includes(r['진행상황'])).length;
+  const done=rows.filter(r=>r['진행상황']==='전형완료').length;
+  document.getElementById('summaryGrid').innerHTML=[
+    {label:'# 총합',val:total,sub:`진행중 ${ongoing} · 완료 ${done}`,accent:true},
+    {label:'총 지원자',val:apply.toLocaleString(),sub:''},
+    {label:'서류 검토',val:doc.toLocaleString(),sub:''},
+    {label:'1차 인터뷰',val:i1.toLocaleString(),sub:''},
+    {label:'최종합격',val:hire,sub:`2차 통과 ${i2}`},
+  ].map(m=>`<div class="sum-card${m.accent?' accent':''}"><div class="sum-label">${m.label}</div><div class="sum-val">${m.val}</div><div class="sum-sub">${m.sub}</div></div>`).join('');
+
+  // Funnel
+  const fSteps=[
+    {label:'지원자',val:apply,rate:''},
+    {label:'서류검토',val:doc,rate:pct(doc,apply)},
+    {label:'1차 인터뷰',val:i1,rate:pct(i1,doc)},
+    {label:'2차 인터뷰',val:i2,rate:pct(i2,i1)},
+    {label:'최종합격',val:hire,rate:pct(hire,i2)},
+  ];
+  document.getElementById('funnelRow').innerHTML=fSteps.map(f=>`
+    <div class="funnel-card">
+      <div class="funnel-stage">${f.label}</div>
+      <div class="funnel-num">${f.val.toLocaleString()}</div>
+      <div class="funnel-rate">${f.rate?'전환율 '+f.rate:''}</div>
     </div>`).join('');
 
-  // --- TO Grid ---
-  const toData = [
-    { label: '정기 T/O', total: 184, done: 147, remain: 37 },
-    { label: '추가 승인 T/O', total: 285, done: 88, remain: 197 },
-    { label: '총계', total: 469, done: 235, remain: 234 },
+  // Interview info
+  const r1=rows.filter(r=>r['전형단계']==='1차 인터뷰');
+  const r2=rows.filter(r=>r['전형단계']==='2차 인터뷰');
+  const i1_active=r1.reduce((s,r)=>s+n(r['1차 인터뷰']),0);
+  const i2_active=r2.reduce((s,r)=>s+n(r['2차 인터뷰']),0);
+  document.getElementById('interview1Info').innerHTML=`
+    <div class="info-row"><span class="lbl">총 후보자</span><span class="val">${i1_active}명</span></div>
+    <div class="info-row"><span class="lbl">L 1차 인터뷰 종료</span><span class="val">${r1.length}건</span></div>
+    <div class="info-row"><span class="lbl">L 중간 노티 대상자</span><span class="val">-</span></div>
+    <div class="info-row"><span class="lbl">L 전형 종료 노티 대상자</span><span class="val">-</span></div>`;
+  document.getElementById('interview2Info').innerHTML=`
+    <div class="info-row"><span class="lbl">총 후보자</span><span class="val">${i2_active}명</span></div>
+    <div class="info-row"><span class="lbl">L 2차 인터뷰 종료</span><span class="val">${r2.length}건</span></div>
+    <div class="info-row"><span class="lbl">L 중간 노티 대상자</span><span class="val">-</span></div>
+    <div class="info-row"><span class="lbl">L 전형 종료 노티 대상자</span><span class="val">-</span></div>`;
+
+  // Conversion rates
+  const rateSteps=[
+    {label:'필기전형→서류검토',open:pct(doc,apply),total:pct(doc,apply)},
+    {label:'서류검토→1차 인터뷰',open:pct(i1,doc),total:pct(i1,doc)},
+    {label:'1차 인터뷰→2차 인터뷰',open:pct(i2,i1),total:pct(i2,i1)},
   ];
-  document.getElementById('toGrid').innerHTML = toData.map(t => {
-    const doneW = Math.round((t.done / t.total) * 100);
-    return `<div class="to-card">
-      <div class="to-label">${t.label}</div>
-      <div class="to-total">${t.total}<span style="font-size:13px;font-weight:400;color:var(--text3)"> 개</span></div>
-      <div class="to-bars">
-        <div class="to-bar-done" style="width:${doneW}%"></div>
-        <div class="to-bar-remain"></div>
-      </div>
-      <div class="to-stats">
-        <span class="to-stat-done">소진 ${t.done}</span>
-        <span class="to-stat-remain">잔여 ${t.remain}</span>
-      </div>
-    </div>`;
-  }).join('');
+  document.getElementById('rateGrid').innerHTML=rateSteps.map(r=>`
+    <div class="rate-item">
+      <div class="rate-label">${r.label}</div>
+      <div class="rate-pct">${r.open}</div>
+    </div>`).join('');
 
-  // --- Funnel ---
-  const funnelData = [
-    { label: '지원', val: applied, color: '#1a1a18' },
-    { label: '서류', val: valid.reduce((s,r) => s+numRaw(r['서류검토']),0), color: '#2563eb' },
-    { label: '1차', val: pass1, color: '#7c3aed' },
-    { label: '2차', val: pass2, color: '#b45309' },
-    { label: '합격', val: hired, color: '#16a34a' },
-  ];
-  const maxF = funnelData[0].val || 1;
-  document.getElementById('funnelChart').innerHTML = funnelData.map(f => {
-    const pct = Math.round((f.val / maxF) * 100);
-    const pctStr = f === funnelData[0] ? '' : `${pct}%`;
-    return `<div class="funnel-row">
-      <div class="funnel-label">${f.label}</div>
-      <div class="funnel-bar-bg">
-        <div class="funnel-bar" style="width:${pct}%;background:${f.color}">
-          <span class="funnel-val">${f.val.toLocaleString()}</span>
-        </div>
-      </div>
-      <div class="funnel-pct">${pctStr}</div>
-    </div>`;
-  }).join('');
+  // Stage table
+  const stages=[...new Set(rows.map(r=>r['전형단계']).filter(Boolean))].sort((a,b)=>{
+    const ai=STAGE_ORDER.indexOf(a),bi=STAGE_ORDER.indexOf(b);
+    return (ai<0?99:ai)-(bi<0?99:bi);
+  });
+  const jobGroups=[...new Set(rows.map(r=>r['직군']).filter(Boolean))].sort();
 
-  // --- Job donut ---
-  const jobCnt = {};
-  valid.forEach(r => { const j = r['직군'] || '기타'; jobCnt[j] = (jobCnt[j] || 0) + 1; });
-  const jobLabels = Object.keys(jobCnt).sort((a,b) => jobCnt[b]-jobCnt[a]);
-  const jobVals = jobLabels.map(k => jobCnt[k]);
-  buildLegend('legendJob', jobLabels.map((l,i) => `${l} ${jobVals[i]}`), CHART_COLORS);
-  document.getElementById('donutJobCenter').innerHTML = `<div class="donut-center-val">${total}</div><div class="donut-center-label">전체</div>`;
-  charts.push(new Chart(document.getElementById('cJob'), {
-    type: 'doughnut',
-    data: { labels: jobLabels, datasets: [{ data: jobVals, backgroundColor: CHART_COLORS, borderWidth: 3, borderColor: '#fff', hoverBorderWidth: 3 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed}건` } } }, cutout: '65%' }
-  }));
+  let thead='<thead><tr><th class="left">구분</th>';
+  stages.forEach(s=>thead+=`<th>${s}</th>`);
+  thead+='<th>합계</th></tr></thead>';
 
-  // --- Status donut ---
-  const stCnt = {};
-  valid.forEach(r => { const s = r['진행상황'] || '미상'; stCnt[s] = (stCnt[s]||0)+1; });
-  const stLabels = Object.keys(stCnt).sort((a,b)=>stCnt[b]-stCnt[a]);
-  const stVals = stLabels.map(k=>stCnt[k]);
-  buildLegend('legendStatus', stLabels.map((l,i)=>`${l} ${stVals[i]}`), CHART_COLORS);
-  document.getElementById('donutStatusCenter').innerHTML = `<div class="donut-center-val" style="font-size:17px">${total}</div><div class="donut-center-label">건</div>`;
-  charts.push(new Chart(document.getElementById('cStatus'), {
-    type: 'doughnut',
-    data: { labels: stLabels, datasets: [{ data: stVals, backgroundColor: CHART_COLORS, borderWidth: 3, borderColor: '#fff' }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '65%' }
-  }));
-
-  // --- Stage bar ---
-  const stageCnt = {};
-  valid.forEach(r => { if (r['전형단계']) stageCnt[r['전형단계']] = (stageCnt[r['전형단계']]||0)+1; });
-  const stageLabels = Object.keys(stageCnt).sort((a,b)=>stageCnt[b]-stageCnt[a]).slice(0,8);
-  charts.push(new Chart(document.getElementById('cStage'), {
-    type: 'bar',
-    data: { labels: stageLabels, datasets: [{ data: stageLabels.map(k=>stageCnt[k]), backgroundColor: '#bfdbfe', borderRadius: 4, borderSkipped: false }] },
-    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } }, y: { ticks: { font: { size: 10 } }, grid: { display: false } } } }
-  }));
-
-  // --- Owner bar ---
-  const ownerCnt = {};
-  valid.forEach(r => { if (r['운영담당']) ownerCnt[r['운영담당']] = (ownerCnt[r['운영담당']]||0)+1; });
-  const ownerLabels = Object.keys(ownerCnt).sort((a,b)=>ownerCnt[b]-ownerCnt[a]);
-  charts.push(new Chart(document.getElementById('cOwner'), {
-    type: 'bar',
-    data: { labels: ownerLabels, datasets: [{ data: ownerLabels.map(k=>ownerCnt[k]), backgroundColor: '#bbf7d0', borderRadius: 4, borderSkipped: false }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { stepSize: 10, font: { size: 10 } } } } }
-  }));
-
-  // --- Filters ---
-  function fillSelect(id, vals) {
-    const el = document.getElementById(id);
-    const first = el.options[0];
-    el.innerHTML = '';
-    el.appendChild(first);
-    [...new Set(vals.filter(v => v && v !== 'NaN'))].sort().forEach(v => {
-      const o = document.createElement('option'); o.value = v; o.textContent = v; el.appendChild(o);
+  let tbody='<tbody>';
+  // 직군별 행
+  jobGroups.forEach(job=>{
+    const jobRows=rows.filter(r=>r['직군']===job);
+    let row=`<tr><td class="left"><span class="badge b-${job==='Tech'?'blue':job==='S&B'?'purple':job==='Corp'?'green':'amber'}">${job}</span></td>`;
+    let total=0;
+    stages.forEach(s=>{
+      const cnt=jobRows.filter(r=>r['전형단계']===s).length;
+      total+=cnt;
+      row+=`<td class="${cnt===0?'zero':'num'}">${cnt===0?'-':cnt}</td>`;
     });
-  }
-  fillSelect('fJob', valid.map(r => r['직군']));
-  fillSelect('fStage', valid.map(r => r['전형단계']));
-  fillSelect('fStatus', valid.map(r => r['진행상황']));
-  fillSelect('fOwner', valid.map(r => r['운영담당']));
+    row+=`<td class="num" style="font-weight:700">${total}</td></tr>`;
+    tbody+=row;
+  });
+  // 합계 행
+  let totalRow='<tr style="background:var(--surface2);font-weight:600"><td class="left">합계</td>';
+  let grandTotal=0;
+  stages.forEach(s=>{
+    const cnt=rows.filter(r=>r['전형단계']===s).length;
+    grandTotal+=cnt;
+    totalRow+=`<td class="num">${cnt===0?'-':cnt}</td>`;
+  });
+  totalRow+=`<td class="num">${grandTotal}</td></tr>`;
+  tbody+=totalRow+'</tbody>';
+  document.getElementById('stageTable').innerHTML=thead+tbody;
 
-  function renderTable() {
-    const fj = document.getElementById('fJob').value;
-    const fs = document.getElementById('fStage').value;
-    const fst = document.getElementById('fStatus').value;
-    const fo = document.getElementById('fOwner').value;
-    const filtered = valid.filter(r =>
-      (!fj || r['직군'] === fj) &&
-      (!fs || r['전형단계'] === fs) &&
-      (!fst || r['진행상황'] === fst) &&
-      (!fo || r['운영담당'] === fo)
-    );
-    document.getElementById('tableCount').textContent = filtered.length + '건';
-    document.getElementById('tableBody').innerHTML = filtered.slice(0, 100).map(r => `<tr>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r['직무명']||r['공고명']||''}">${r['직무명'] || r['공고명'] || '-'}</td>
-      <td>${jobBadge(r['직군'])}</td>
-      <td><span class="badge b-gray" style="font-size:10px">${r['고용형태']||'-'}</span></td>
-      <td>${stageBadge(r['전형단계'])}</td>
-      <td>${statusBadge(r['진행상황'])}</td>
-      <td style="font-size:12px;color:var(--text2)">${r['운영담당']||'-'}</td>
-      <td class="num">${num(r['지원자'])}</td>
-      <td class="num">${num(r['서류검토'])}</td>
-      <td class="num">${num(r['1차 인터뷰'])}</td>
-      <td class="num">${num(r['2차 인터뷰'])}</td>
-      <td class="num-bold">${num(r['최종합격'])}</td>
-    </tr>`).join('');
-  }
+  // Charts
+  charts.forEach(c=>c.destroy()); charts=[];
 
-  ['fJob','fStage','fStatus','fOwner'].forEach(id => document.getElementById(id).addEventListener('change', renderTable));
-  renderTable();
+  // Chart 1: Org by stage (bar)
+  const lv5groups={};
+  rows.forEach(r=>{
+    const org=r['Lv.5']||r['Lv.4']||'기타';
+    const s=r['전형단계'];
+    if(!s)return;
+    if(!lv5groups[org])lv5groups[org]={};
+    lv5groups[org][s]=(lv5groups[org][s]||0)+1;
+  });
+  const topOrgs=Object.entries(lv5groups).sort((a,b)=>Object.values(b[1]).reduce((x,y)=>x+y,0)-Object.values(a[1]).reduce((x,y)=>x+y,0)).slice(0,15).map(e=>e[0]);
+  const usedStages=[...new Set(rows.map(r=>r['전형단계']).filter(Boolean))];
+  const ds1=usedStages.map(s=>({
+    label:s,
+    data:topOrgs.map(o=>(lv5groups[o]||{})[s]||0),
+    backgroundColor:STAGE_COLORS[s]||'#94a3b8',
+    stack:'stack'
+  }));
+  charts.push(new Chart(document.getElementById('cOrg'),{
+    type:'bar',
+    data:{labels:topOrgs,datasets:ds1},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true,ticks:{font:{size:10},maxRotation:35}},y:{stacked:true,ticks:{font:{size:10}}}}}
+  }));
+
+  // Chart 2: Org funnel (grouped bar)
+  const orgFunnel={};
+  rows.forEach(r=>{
+    const org=r['Lv.5']||r['Lv.4']||'기타';
+    if(!orgFunnel[org])orgFunnel[org]={apply:0,i1:0,i2:0,hire:0};
+    orgFunnel[org].apply+=n(r['지원자']);
+    orgFunnel[org].i1+=n(r['1차 인터뷰']);
+    orgFunnel[org].i2+=n(r['2차 인터뷰']);
+    orgFunnel[org].hire+=n(r['최종합격']);
+  });
+  const topFunnelOrgs=Object.entries(orgFunnel).sort((a,b)=>b[1].apply-a[1].apply).slice(0,12).map(e=>e[0]);
+  charts.push(new Chart(document.getElementById('cFunnel'),{
+    type:'bar',
+    data:{
+      labels:topFunnelOrgs,
+      datasets:[
+        {label:'지원자',data:topFunnelOrgs.map(o=>orgFunnel[o].apply),backgroundColor:'#bfdbfe'},
+        {label:'1차',data:topFunnelOrgs.map(o=>orgFunnel[o].i1),backgroundColor:'#818cf8'},
+        {label:'2차',data:topFunnelOrgs.map(o=>orgFunnel[o].i2),backgroundColor:'#a78bfa'},
+        {label:'합격',data:topFunnelOrgs.map(o=>orgFunnel[o].hire),backgroundColor:'#6ee7b7'},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:10,padding:10}}},scales:{x:{ticks:{font:{size:10},maxRotation:35}},y:{ticks:{font:{size:10}}}}}
+  }));
 }
 
-// Parse Excel
-function parseFile(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
-      const ws = wb.Sheets['운영 시트'];
-      if (!ws) { alert('"운영 시트" 탭을 찾을 수 없습니다.\n파일을 확인해주세요.'); return; }
-      const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
-      const headerIdx = raw.findIndex(r => r && r.some && r.some(c => String(c||'').includes('No.')));
-      if (headerIdx < 0) { alert('헤더 행을 찾을 수 없습니다.'); return; }
-      const headers = raw[headerIdx].map(c => String(c||'').trim());
-      const rows = raw.slice(headerIdx + 1).map(r => {
-        const obj = {}; headers.forEach((h, i) => { obj[h] = r[i]; }); return obj;
+function setOwner(o){filters.owner=o==='전체'?null:o;render();}
+
+function parseFile(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+      const ws=wb.Sheets['운영 시트'];
+      if(!ws){alert('"운영 시트" 탭을 찾을 수 없습니다.');return;}
+      const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+      const hi=raw.findIndex(r=>r&&r.some&&r.some(c=>String(c||'').includes('No.')));
+      if(hi<0){alert('헤더를 찾을 수 없습니다.');return;}
+      const headers=raw[hi].map(c=>String(c||'').trim());
+      const rows=raw.slice(hi+1).map(r=>{const o={};headers.forEach((h,i)=>{o[h]=r[i];});return o;});
+      allRows=rows.filter(r=>{
+        const nm=r['공고명'];
+        return nm&&String(nm).trim()&&nm!=='NaN'&&nm!=='　'&&nm!=='0'&&Number(r['No.'])>0;
       });
-      renderDashboard(rows);
-    } catch(err) { alert('파일 읽기 오류: ' + err.message); }
+      document.getElementById('uploadZone').classList.add('hidden');
+      document.getElementById('lastUpdate').textContent=' · '+new Date().toLocaleDateString('ko-KR');
+      filters={status:null,job:null,lv4:null,lv5:null,owner:null};
+      render();
+    }catch(err){alert('오류: '+err.message);}
   };
   reader.readAsArrayBuffer(file);
 }
 
-// Event listeners
-document.getElementById('fileInput').addEventListener('change', e => { if (e.target.files[0]) parseFile(e.target.files[0]); });
-const zone = document.getElementById('uploadZone');
-zone.addEventListener('click', () => document.getElementById('fileInput').click());
-zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
-zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
-zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag'); if (e.dataTransfer.files[0]) parseFile(e.dataTransfer.files[0]); });
+// Init with sidebar visible
+document.getElementById('filterStatus').innerHTML='<div style="font-size:11px;color:var(--text3);padding:4px 8px">파일 업로드 후 표시됩니다</div>';
+document.getElementById('filterJob').innerHTML='';
+document.getElementById('filterLv4').innerHTML='';
+document.getElementById('filterLv5').innerHTML='';
+document.getElementById('ownerBtns').innerHTML='<div style="font-size:11px;color:var(--text3)">파일을 업로드하면 대시보드가 채워집니다</div>';
+document.getElementById('summaryGrid').innerHTML='';
+document.getElementById('funnelRow').innerHTML='';
+document.getElementById('interview1Info').innerHTML='';
+document.getElementById('interview2Info').innerHTML='';
+document.getElementById('rateGrid').innerHTML='';
+document.getElementById('stageTable').innerHTML='';
+
+document.getElementById('fileInput').addEventListener('change',e=>{if(e.target.files[0])parseFile(e.target.files[0]);});
+const hz=document.querySelector('.header');
+hz.querySelector('label').addEventListener('dragover',e=>e.preventDefault());
+document.body.addEventListener('dragover',e=>e.preventDefault());
+document.body.addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer.files[0])parseFile(e.dataTransfer.files[0]);});
 </script>
 </body>
 </html>
