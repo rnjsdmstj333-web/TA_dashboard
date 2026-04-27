@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TA 경력채용 운영 대시보드</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface2: #f0efe9;
+    --border: rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.14);
+    --text: #1a1a18;
+    --text2: #6b6a65;
+    --text3: #9e9d98;
+    --accent: #1a1a18;
+    --blue: #2563eb;
+    --blue-bg: #eff6ff;
+    --green: #16a34a;
+    --green-bg: #f0fdf4;
+    --amber: #b45309;
+    --amber-bg: #fffbeb;
+    --red: #dc2626;
+    --red-bg: #fef2f2;
+    --purple: #7c3aed;
+    --purple-bg: #f5f3ff;
+    --gray-bg: #f1f0eb;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Pretendard', -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+
+  /* Header */
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+  .logo span { color: var(--text3); font-weight: 400; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .upload-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; transition: opacity .15s; }
+  .upload-btn:hover { opacity: .85; }
+  .upload-btn svg { width: 14px; height: 14px; }
+  .last-update { font-size: 12px; color: var(--text3); }
+  #fileInput { display: none; }
+
+  /* Layout */
+  .main { max-width: 1280px; margin: 0 auto; padding: 28px 32px; }
+
+  /* Upload zone */
+  .upload-zone { border: 2px dashed var(--border2); border-radius: var(--radius); padding: 60px 32px; text-align: center; cursor: pointer; transition: all .2s; background: var(--surface); margin-bottom: 28px; }
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: var(--surface2); }
+  .upload-zone-icon { font-size: 36px; margin-bottom: 12px; }
+  .upload-zone h2 { font-size: 16px; font-weight: 500; margin-bottom: 6px; }
+  .upload-zone p { font-size: 13px; color: var(--text3); }
+  .hidden { display: none !important; }
+
+  /* Metrics */
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+  .metric-label { font-size: 12px; color: var(--text3); margin-bottom: 8px; }
+  .metric-value { font-size: 28px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 6px; }
+  .metric-accent { border-top: 3px solid var(--accent); }
+
+  /* TO cards */
+  .to-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .to-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; }
+  .to-label { font-size: 11px; color: var(--text3); margin-bottom: 8px; font-weight: 500; }
+  .to-total { font-size: 24px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 10px; }
+  .to-bars { display: flex; gap: 4px; height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+  .to-bar-done { background: var(--accent); border-radius: 3px; }
+  .to-bar-remain { background: var(--border2); border-radius: 3px; flex: 1; }
+  .to-stats { display: flex; gap: 14px; font-size: 11px; }
+  .to-stat-done { color: var(--green); font-weight: 500; }
+  .to-stat-remain { color: var(--amber); font-weight: 500; }
+
+  /* Charts */
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .charts-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .chart-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .chart-sub { font-size: 11px; color: var(--text3); margin-bottom: 14px; }
+  .chart-wrap { position: relative; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  /* Filters + Table */
+  .table-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 24px; }
+  .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .table-header-left { display: flex; align-items: baseline; gap: 10px; }
+  .table-title { font-size: 14px; font-weight: 500; }
+  .table-count { font-size: 12px; color: var(--text3); }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  .filters select { font-size: 12px; padding: 6px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); cursor: pointer; font-family: inherit; }
+  .filters select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: .4px; border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--surface2); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.num-bold { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* Badges */
+  .badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .b-blue { background: var(--blue-bg); color: var(--blue); }
+  .b-green { background: var(--green-bg); color: var(--green); }
+  .b-amber { background: var(--amber-bg); color: var(--amber); }
+  .b-red { background: var(--red-bg); color: var(--red); }
+  .b-purple { background: var(--purple-bg); color: var(--purple); }
+  .b-gray { background: var(--gray-bg); color: var(--text2); }
+
+  /* Funnel */
+  .funnel-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .funnel-row { display: flex; align-items: center; gap: 10px; }
+  .funnel-label { font-size: 11px; color: var(--text3); width: 60px; text-align: right; flex-shrink: 0; }
+  .funnel-bar-bg { flex: 1; background: var(--surface2); border-radius: 3px; height: 20px; overflow: hidden; position: relative; }
+  .funnel-bar { height: 100%; border-radius: 3px; transition: width .6s ease; display: flex; align-items: center; }
+  .funnel-val { font-size: 11px; font-weight: 500; color: #fff; padding: 0 8px; white-space: nowrap; }
+  .funnel-pct { font-size: 10px; color: var(--text3); width: 36px; flex-shrink: 0; }
+
+  /* Donut center text */
+  .donut-wrap { position: relative; }
+  .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+  .donut-center-val { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+  .donut-center-label { font-size: 10px; color: var(--text3); }
+
+  @media (max-width: 900px) {
+    .main { padding: 20px 16px; }
+    .charts-grid, .charts-grid-3 { grid-template-columns: 1fr; }
+    .to-grid { grid-template-columns: 1fr; }
+    .header { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo">TA Dashboard <span>경력채용 운영현황</span></div>
+  </div>
+  <div class="header-right">
+    <span class="last-update" id="lastUpdate">파일을 업로드해주세요</span>
+    <label class="upload-btn" for="fileInput">
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M7 9V2M4 5l3-3 3 3M2 10v1a1 1 0 001 1h8a1 1 0 001-1v-1"/>
+      </svg>
+      엑셀 업로드
+    </label>
+    <input type="file" id="fileInput" accept=".xlsx,.xls">
+  </div>
+</header>
+
+<main class="main">
+  <!-- Upload zone -->
+  <div class="upload-zone" id="uploadZone">
+    <div class="upload-zone-icon">📊</div>
+    <h2>운영 시트 엑셀 파일을 업로드하세요</h2>
+    <p>드래그&amp;드롭 또는 클릭 · "운영 시트" 탭 자동 인식 · 파일은 브라우저에서만 처리됩니다</p>
+  </div>
+
+  <div id="dashboard" class="hidden">
+    <!-- Metrics -->
+    <div class="section-label">핵심 지표</div>
+    <div class="metrics-grid" id="metricsGrid"></div>
+
+    <!-- TO -->
+    <div class="section-label">T/O 현황 (정규직)</div>
+    <div class="to-grid" id="toGrid"></div>
+
+    <!-- Charts row 1 -->
+    <div class="section-label">채용 현황 분석</div>
+    <div class="charts-grid" id="chartsRow1">
+      <div class="chart-card">
+        <div class="chart-title">지원 ~ 합격 퍼널</div>
+        <div class="chart-sub">전체 공고 합산 기준</div>
+        <div class="funnel-wrap" id="funnelChart"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">직군별 공고 분포</div>
+        <div class="chart-sub">진행 중 포함 전체</div>
+        <div class="legend" id="legendJob"></div>
+        <div class="chart-wrap donut-wrap" style="height:180px">
+          <canvas id="cJob" role="img" aria-label="직군별 공고 분포 도넛 차트"></canvas>
+          <div class="donut-center" id="donutJobCenter"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-grid-3">
+      <div class="chart-card">
+        <div class="chart-title">진행상황</div>
+        <div class="chart-sub">공고 건수 기준</div>
+        <div class="legend" id="legendStatus"></div>
+        <div class="chart-wrap donut-wrap" style="height:160px">
+          <canvas id="cStatus" role="img" aria-label="진행상황 도넛 차트"></canvas>
+          <div class="donut-center" id="donutStatusCenter"></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">전형단계 분포</div>
+        <div class="chart-sub">공고 건수 기준</div>
+        <div class="chart-wrap" style="height:180px">
+          <canvas id="cStage" role="img" aria-label="전형단계 분포 가로 막대"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">담당자별 공고</div>
+        <div class="chart-sub">담당자 기준</div>
+        <div class="chart-wrap" style="height:180px">
+          <canvas id="cOwner" role="img" aria-label="담당자별 공고 수 막대 차트"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-section">
+      <div class="table-header">
+        <div class="table-header-left">
+          <span class="table-title">공고 목록</span>
+          <span class="table-count" id="tableCount"></span>
+        </div>
+        <div class="filters">
+          <select id="fJob"><option value="">전체 직군</option></select>
+          <select id="fStage"><option value="">전체 전형단계</option></select>
+          <select id="fStatus"><option value="">전체 진행상황</option></select>
+          <select id="fOwner"><option value="">전체 담당자</option></select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>직무명</th>
+              <th>직군</th>
+              <th>고용형태</th>
+              <th>전형단계</th>
+              <th>진행상황</th>
+              <th>담당자</th>
+              <th>지원자</th>
+              <th>서류</th>
+              <th>1차</th>
+              <th>2차</th>
+              <th>최종합격</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const CHART_COLORS = ['#1a1a18','#2563eb','#16a34a','#b45309','#7c3aed','#db2777','#0891b2','#dc2626'];
+const CHART_COLORS_LIGHT = ['#e5e5e0','#bfdbfe','#bbf7d0','#fde68a','#ddd6fe','#fbcfe8','#a5f3fc','#fecaca'];
+let charts = [];
+
+function destroyCharts() { charts.forEach(c => c.destroy()); charts = []; }
+
+function num(v) {
+  const n = Number(v);
+  return (v === null || v === undefined || v === '' || isNaN(n)) ? '-' : Math.round(n).toLocaleString();
+}
+function numRaw(v) {
+  const n = Number(v);
+  return (v === null || v === undefined || v === '' || isNaN(n)) ? 0 : Math.round(n);
+}
+
+function statusBadge(s) {
+  if (!s || s === 'NaN') return '<span class="badge b-gray">-</span>';
+  const m = { '전형완료': 'b-green', '검토 중': 'b-blue', '진행 중': 'b-blue', '평가 중': 'b-amber', '시작 전': 'b-gray', '전체 불합격': 'b-red', '전형포기': 'b-red' };
+  return `<span class="badge ${m[s] || 'b-gray'}">${s}</span>`;
+}
+function stageBadge(s) {
+  if (!s || s === 'NaN') return '<span class="badge b-gray">-</span>';
+  const m = { '합격/입사': 'b-green', '처우협의': 'b-green', '1차 인터뷰': 'b-blue', '2차 인터뷰': 'b-purple', '3차 인터뷰': 'b-purple', '프로필': 'b-amber', '서류전형': 'b-amber', '채용공고': 'b-gray', '필기전형': 'b-gray', '전체 불합격': 'b-red', '레퍼런스 체크': 'b-blue' };
+  return `<span class="badge ${m[s] || 'b-gray'}">${s}</span>`;
+}
+function jobBadge(j) {
+  const m = { 'Tech': 'b-blue', 'S&B': 'b-purple', 'Corp': 'b-green', 'Design': 'b-amber' };
+  return `<span class="badge ${m[j] || 'b-gray'}">${j || '-'}</span>`;
+}
+
+function buildLegend(id, labels, colors) {
+  document.getElementById(id).innerHTML = labels.map((l, i) =>
+    `<span class="legend-item"><span class="legend-dot" style="background:${colors[i]}"></span>${l}</span>`
+  ).join('');
+}
+
+function renderDashboard(rows) {
+  destroyCharts();
+  const valid = rows.filter(r => {
+    const n = r['공고명'];
+    return n && String(n).trim() && n !== 'NaN' && n !== '　' && n !== '0' && Number(r['No.']) > 0;
+  });
+
+  document.getElementById('uploadZone').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+  document.getElementById('lastUpdate').textContent = '업데이트: ' + new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+  // --- Metrics ---
+  const total = valid.length;
+  const ongoing = valid.filter(r => ['검토 중','진행 중','평가 중','시작 전'].includes(r['진행상황'])).length;
+  const done = valid.filter(r => r['진행상황'] === '전형완료').length;
+  const hired = valid.reduce((s, r) => s + numRaw(r['최종합격']), 0);
+  const applied = valid.reduce((s, r) => s + numRaw(r['지원자']), 0);
+  const pass1 = valid.reduce((s, r) => s + numRaw(r['1차 인터뷰']), 0);
+  const pass2 = valid.reduce((s, r) => s + numRaw(r['2차 인터뷰']), 0);
+  const cvRate = applied > 0 ? ((pass1 / applied) * 100).toFixed(1) : '-';
+
+  document.getElementById('metricsGrid').innerHTML = [
+    { label: '총 공고 수', val: total, sub: `진행중 ${ongoing} · 완료 ${done}`, accent: true },
+    { label: '총 지원자', val: applied.toLocaleString(), sub: '전체 공고 합산', accent: false },
+    { label: '최종 합격', val: hired, sub: `2차 통과 ${pass2}명`, accent: false },
+    { label: '서류 통과율', val: cvRate + '%', sub: `지원 ${applied} → 1차 ${pass1}`, accent: false },
+  ].map(m => `
+    <div class="metric${m.accent ? ' metric-accent' : ''}">
+      <div class="metric-label">${m.label}</div>
+      <div class="metric-value">${m.val}</div>
+      <div class="metric-sub">${m.sub}</div>
+    </div>`).join('');
+
+  // --- TO Grid ---
+  const toData = [
+    { label: '정기 T/O', total: 184, done: 147, remain: 37 },
+    { label: '추가 승인 T/O', total: 285, done: 88, remain: 197 },
+    { label: '총계', total: 469, done: 235, remain: 234 },
+  ];
+  document.getElementById('toGrid').innerHTML = toData.map(t => {
+    const doneW = Math.round((t.done / t.total) * 100);
+    return `<div class="to-card">
+      <div class="to-label">${t.label}</div>
+      <div class="to-total">${t.total}<span style="font-size:13px;font-weight:400;color:var(--text3)"> 개</span></div>
+      <div class="to-bars">
+        <div class="to-bar-done" style="width:${doneW}%"></div>
+        <div class="to-bar-remain"></div>
+      </div>
+      <div class="to-stats">
+        <span class="to-stat-done">소진 ${t.done}</span>
+        <span class="to-stat-remain">잔여 ${t.remain}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // --- Funnel ---
+  const funnelData = [
+    { label: '지원', val: applied, color: '#1a1a18' },
+    { label: '서류', val: valid.reduce((s,r) => s+numRaw(r['서류검토']),0), color: '#2563eb' },
+    { label: '1차', val: pass1, color: '#7c3aed' },
+    { label: '2차', val: pass2, color: '#b45309' },
+    { label: '합격', val: hired, color: '#16a34a' },
+  ];
+  const maxF = funnelData[0].val || 1;
+  document.getElementById('funnelChart').innerHTML = funnelData.map(f => {
+    const pct = Math.round((f.val / maxF) * 100);
+    const pctStr = f === funnelData[0] ? '' : `${pct}%`;
+    return `<div class="funnel-row">
+      <div class="funnel-label">${f.label}</div>
+      <div class="funnel-bar-bg">
+        <div class="funnel-bar" style="width:${pct}%;background:${f.color}">
+          <span class="funnel-val">${f.val.toLocaleString()}</span>
+        </div>
+      </div>
+      <div class="funnel-pct">${pctStr}</div>
+    </div>`;
+  }).join('');
+
+  // --- Job donut ---
+  const jobCnt = {};
+  valid.forEach(r => { const j = r['직군'] || '기타'; jobCnt[j] = (jobCnt[j] || 0) + 1; });
+  const jobLabels = Object.keys(jobCnt).sort((a,b) => jobCnt[b]-jobCnt[a]);
+  const jobVals = jobLabels.map(k => jobCnt[k]);
+  buildLegend('legendJob', jobLabels.map((l,i) => `${l} ${jobVals[i]}`), CHART_COLORS);
+  document.getElementById('donutJobCenter').innerHTML = `<div class="donut-center-val">${total}</div><div class="donut-center-label">전체</div>`;
+  charts.push(new Chart(document.getElementById('cJob'), {
+    type: 'doughnut',
+    data: { labels: jobLabels, datasets: [{ data: jobVals, backgroundColor: CHART_COLORS, borderWidth: 3, borderColor: '#fff', hoverBorderWidth: 3 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed}건` } } }, cutout: '65%' }
+  }));
+
+  // --- Status donut ---
+  const stCnt = {};
+  valid.forEach(r => { const s = r['진행상황'] || '미상'; stCnt[s] = (stCnt[s]||0)+1; });
+  const stLabels = Object.keys(stCnt).sort((a,b)=>stCnt[b]-stCnt[a]);
+  const stVals = stLabels.map(k=>stCnt[k]);
+  buildLegend('legendStatus', stLabels.map((l,i)=>`${l} ${stVals[i]}`), CHART_COLORS);
+  document.getElementById('donutStatusCenter').innerHTML = `<div class="donut-center-val" style="font-size:17px">${total}</div><div class="donut-center-label">건</div>`;
+  charts.push(new Chart(document.getElementById('cStatus'), {
+    type: 'doughnut',
+    data: { labels: stLabels, datasets: [{ data: stVals, backgroundColor: CHART_COLORS, borderWidth: 3, borderColor: '#fff' }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '65%' }
+  }));
+
+  // --- Stage bar ---
+  const stageCnt = {};
+  valid.forEach(r => { if (r['전형단계']) stageCnt[r['전형단계']] = (stageCnt[r['전형단계']]||0)+1; });
+  const stageLabels = Object.keys(stageCnt).sort((a,b)=>stageCnt[b]-stageCnt[a]).slice(0,8);
+  charts.push(new Chart(document.getElementById('cStage'), {
+    type: 'bar',
+    data: { labels: stageLabels, datasets: [{ data: stageLabels.map(k=>stageCnt[k]), backgroundColor: '#bfdbfe', borderRadius: 4, borderSkipped: false }] },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } }, y: { ticks: { font: { size: 10 } }, grid: { display: false } } } }
+  }));
+
+  // --- Owner bar ---
+  const ownerCnt = {};
+  valid.forEach(r => { if (r['운영담당']) ownerCnt[r['운영담당']] = (ownerCnt[r['운영담당']]||0)+1; });
+  const ownerLabels = Object.keys(ownerCnt).sort((a,b)=>ownerCnt[b]-ownerCnt[a]);
+  charts.push(new Chart(document.getElementById('cOwner'), {
+    type: 'bar',
+    data: { labels: ownerLabels, datasets: [{ data: ownerLabels.map(k=>ownerCnt[k]), backgroundColor: '#bbf7d0', borderRadius: 4, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { stepSize: 10, font: { size: 10 } } } } }
+  }));
+
+  // --- Filters ---
+  function fillSelect(id, vals) {
+    const el = document.getElementById(id);
+    const first = el.options[0];
+    el.innerHTML = '';
+    el.appendChild(first);
+    [...new Set(vals.filter(v => v && v !== 'NaN'))].sort().forEach(v => {
+      const o = document.createElement('option'); o.value = v; o.textContent = v; el.appendChild(o);
+    });
+  }
+  fillSelect('fJob', valid.map(r => r['직군']));
+  fillSelect('fStage', valid.map(r => r['전형단계']));
+  fillSelect('fStatus', valid.map(r => r['진행상황']));
+  fillSelect('fOwner', valid.map(r => r['운영담당']));
+
+  function renderTable() {
+    const fj = document.getElementById('fJob').value;
+    const fs = document.getElementById('fStage').value;
+    const fst = document.getElementById('fStatus').value;
+    const fo = document.getElementById('fOwner').value;
+    const filtered = valid.filter(r =>
+      (!fj || r['직군'] === fj) &&
+      (!fs || r['전형단계'] === fs) &&
+      (!fst || r['진행상황'] === fst) &&
+      (!fo || r['운영담당'] === fo)
+    );
+    document.getElementById('tableCount').textContent = filtered.length + '건';
+    document.getElementById('tableBody').innerHTML = filtered.slice(0, 100).map(r => `<tr>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r['직무명']||r['공고명']||''}">${r['직무명'] || r['공고명'] || '-'}</td>
+      <td>${jobBadge(r['직군'])}</td>
+      <td><span class="badge b-gray" style="font-size:10px">${r['고용형태']||'-'}</span></td>
+      <td>${stageBadge(r['전형단계'])}</td>
+      <td>${statusBadge(r['진행상황'])}</td>
+      <td style="font-size:12px;color:var(--text2)">${r['운영담당']||'-'}</td>
+      <td class="num">${num(r['지원자'])}</td>
+      <td class="num">${num(r['서류검토'])}</td>
+      <td class="num">${num(r['1차 인터뷰'])}</td>
+      <td class="num">${num(r['2차 인터뷰'])}</td>
+      <td class="num-bold">${num(r['최종합격'])}</td>
+    </tr>`).join('');
+  }
+
+  ['fJob','fStage','fStatus','fOwner'].forEach(id => document.getElementById(id).addEventListener('change', renderTable));
+  renderTable();
+}
+
+// Parse Excel
+function parseFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+      const ws = wb.Sheets['운영 시트'];
+      if (!ws) { alert('"운영 시트" 탭을 찾을 수 없습니다.\n파일을 확인해주세요.'); return; }
+      const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+      const headerIdx = raw.findIndex(r => r && r.some && r.some(c => String(c||'').includes('No.')));
+      if (headerIdx < 0) { alert('헤더 행을 찾을 수 없습니다.'); return; }
+      const headers = raw[headerIdx].map(c => String(c||'').trim());
+      const rows = raw.slice(headerIdx + 1).map(r => {
+        const obj = {}; headers.forEach((h, i) => { obj[h] = r[i]; }); return obj;
+      });
+      renderDashboard(rows);
+    } catch(err) { alert('파일 읽기 오류: ' + err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Event listeners
+document.getElementById('fileInput').addEventListener('change', e => { if (e.target.files[0]) parseFile(e.target.files[0]); });
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('click', () => document.getElementById('fileInput').click());
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag'); if (e.dataTransfer.files[0]) parseFile(e.dataTransfer.files[0]); });
+</script>
+</body>
+</html>
